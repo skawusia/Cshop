@@ -1,19 +1,26 @@
+// server.js
 const express = require("express");
-const fetch = require("node-fetch"); // jeśli Node < 18
+const fetch = require("node-fetch"); // npm install node-fetch@2
 const path = require("path");
+
 const app = express();
-
 app.use(express.json());
-app.use(express.static(path.join(__dirname,"public")));
 
+// serwowanie statycznych plików z katalogu "public"
+app.use(express.static(path.join(__dirname, "public")));
+
+// webhook Discorda — podmień na swój URL
+const WEBHOOK_URL = "https://discordapp.com/api/webhooks/1491183612287258674/fb08lNMvTfG6FWRg1-hDTmIlbHwazX3k-4V_kmPzcuczFzueTbeXwzLzELCgsEPBElcF";
+
+// endpoint do obsługi zamówień
 app.post("/order", async (req, res) => {
   const { cart, code } = req.body;
 
-  if(!cart || cart.length===0){
-    return res.status(400).json({ error:"Koszyk pusty" });
+  if (!cart || cart.length === 0) {
+    return res.status(400).json({ error: "Koszyk jest pusty!" });
   }
-  if(!code){
-    return res.status(400).json({ error:"Brak kodu" });
+  if (!code || code.trim() === "") {
+    return res.status(400).json({ error: "Musisz podać kod!" });
   }
 
   let total = 0;
@@ -26,25 +33,26 @@ app.post("/order", async (req, res) => {
   });
 
   try {
-    await fetch("https://discordapp.com/api/webhooks/1491183612287258674/fb08lNMvTfG6FWRg1-hDTmIlbHwazX3k-4V_kmPzcuczFzueTbeXwzLzELCgsEPBElcF", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
+    await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         content:
-`🛒 NOWE ZAMÓWIENIE
+`🛒 **NOWE ZAMÓWIENIE**
+💳 Kod użytkownika: ${code}
 
 📦 Produkty:
 ${list}
 
-💰 Suma: ${total} $
-🏷 Kod użytkownika: ${code}`
+💰 Suma: ${total} $`
       })
     });
-    res.json({ ok:true });
-  } catch(err){
+
+    res.json({ ok: true });
+  } catch (err) {
     console.error(err);
-    res.status(500).json({ error:"Webhook error" });
+    res.status(500).json({ error: "Błąd wysyłki webhooka" });
   }
 });
 
-app.listen(3000, ()=>console.log("Serwer działa: http://localhost:3000"));
+app.listen(3000, () => console.log("Serwer działa: http://localhost:3000"));

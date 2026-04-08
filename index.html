@@ -12,8 +12,6 @@ body {
   color:white;
 }
 
-.hidden { display:none; }
-
 .container {
   display:flex;
   gap:20px;
@@ -81,14 +79,12 @@ input[type="text"], input[type="number"] {
 }
 </style>
 </head>
-
 <body>
 
 <h1>Mój sklep</h1>
 
 <div id="shop">
   <h2>Wybierz produkty</h2>
-
   <div class="container" id="products"></div>
 
   <div id="cart">
@@ -107,8 +103,8 @@ input[type="text"], input[type="number"] {
 const products = [
   {name:"ammo .38 LC", price:20, image:"images/produkt.png", description:"Pociski .38 LC do pistoletu"},
   {name:"ammo 9mm", price:50, image:"images/produktA.png", description:"Pociski 9mm do pistoletu"},
-  {name:"Tłumik do pistoletu", price:150000, image:"images/produktB.png", description:"Redukuje hałas wystrzałów"},
-  {name:"Paczka niespodzianka", price:300000, image:"images/produktC.png", description:"Coś wyjątkowego w środku"}
+  {name:"Tłumik do pistoletu", price:20, image:"images/produktB.png", description:"Redukuje hałas wystrzałów"},
+  {name:"Paczka niespodzianka", price:100, image:"images/produktC.png", description:"Coś wyjątkowego w środku"}
 ];
 
 let cart = [];
@@ -141,7 +137,6 @@ function renderCart(){
   const container = document.getElementById("cartItems");
   container.innerHTML = "";
   let total = 0;
-
   cart.forEach((item, index)=>{
     const itemTotal = item.price * item.quantity;
     total += itemTotal;
@@ -155,17 +150,13 @@ function renderCart(){
     `;
     container.appendChild(div);
   });
-
   document.getElementById("total").innerText = total;
 }
 
 function updateQty(index, value){
   const qty = parseInt(value);
-  if(isNaN(qty) || qty < 1){
-    cart.splice(index,1); 
-  } else {
-    cart[index].quantity = qty;
-  }
+  if(isNaN(qty) || qty < 1) cart.splice(index,1);
+  else cart[index].quantity = qty;
   renderCart();
 }
 
