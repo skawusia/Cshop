@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Sklep</title>
+<style>
+body {
+  font-family: Arial;
+  text-align:center;
+  margin:0;
+  background: linear-gradient(135deg, #1e1e2f, #3a3a6a);
+  color:white;
+}
+
+.hidden { display:none; }
+
+.container {
+  display:flex;
+  gap:20px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-top:20px;
+}
+
+.product {
+  background:white;
+  color:black;
+  padding:15px;
+  border-radius:15px;
+  width:200px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.product img {
+  width:150px;
+  height:150px;
+  object-fit:contain;
+  margin-bottom:10px;
+}
+
+button {
+  padding:6px 10px;
+  margin:3px;
+  background:#5865F2;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+#cart {
+  background:white;
+  color:black;
+  margin:30px auto;
+  padding:20px;
+  border-radius:15px;
+  width:400px;
+}
+
+.cart-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:10px 0;
+}
+
+.cart-item img {
+  width:50px;
+  height:50px;
+  object-fit:contain;
+  margin-right:10px;
+}
+
+input[type="text"], input[type="number"] {
+  padding:5px;
+  width:80%;
+  margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Mój sklep</h1>
+
+<div id="shop">
+  <h2>Wybierz produkty</h2>
+
+  <div class="container" id="products"></div>
+
+  <div id="cart">
+    <h3>Koszyk</h3>
+    <div id="cartItems"></div>
+    <p><strong>Suma: <span id="total">0</span> $</strong></p>
+
+    <label>Twój kod (np. DLKTA-9645):</label><br>
+    <input type="text" id="userCode" placeholder="Wpisz swój kod"><br>
+
+    <button onclick="order()">Zamów</button>
+  </div>
+</div>
+
+<script>
+const products = [
+  {name:"ammo .38 LC", price:20, image:"images/produkt.png", description:"Pociski .38 LC do pistoletu"},
+  {name:"ammo 9mm", price:50, image:"images/produktA.png", description:"Pociski 9mm do pistoletu"},
+  {name:"Tłumik do pistoletu", price:150000, image:"images/produktB.png", description:"Redukuje hałas wystrzałów"},
+  {name:"Paczka niespodzianka", price:300000, image:"images/produktC.png", description:"Coś wyjątkowego w środku"}
+];
+
+let cart = [];
+
+function renderProducts(){
+  const container = document.getElementById("products");
+  container.innerHTML = "";
+  products.forEach((p,i)=>{
+    const div = document.createElement("div");
+    div.className="product";
+    div.innerHTML = `
+      <img src="${p.image}" alt="${p.name}">
+      <h3>${p.name}</h3>
+      <p>${p.description}</p>
+      <p>${p.price} $</p>
+      <button onclick="addToCart(${i})">Dodaj</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function addToCart(index){
+  const existing = cart.find(item => item.name === products[index].name);
+  if(existing){ existing.quantity++; }
+  else { cart.push({...products[index], quantity:1}); }
+  renderCart();
+}
+
+function renderCart(){
+  const container = document.getElementById("cartItems");
+  container.innerHTML = "";
+  let total = 0;
+
+  cart.forEach((item, index)=>{
+    const itemTotal = item.price * item.quantity;
+    total += itemTotal;
+    const div = document.createElement("div");
+    div.className = "cart-item";
+    div.innerHTML = `
+      <img src="${item.image}" alt="${item.name}">
+      <span>${item.name}</span>
+      <input type="number" min="1" value="${item.quantity}" onchange="updateQty(${index}, this.value)">
+      <button onclick="removeItem(${index})">❌</button>
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById("total").innerText = total;
+}
+
+function updateQty(index, value){
+  const qty = parseInt(value);
+  if(isNaN(qty) || qty < 1){
+    cart.splice(index,1); 
+  } else {
+    cart[index].quantity = qty;
+  }
+  renderCart();
+}
+
+function removeItem(index){
+  cart.splice(index,1);
+  renderCart();
+}
+
+function order(){
+  const code = document.getElementById("userCode").value.trim();
+  if(code === ""){
+    alert("Musisz wpisać swój kod!");
+    return;
+  }
+  if(cart.length === 0){
+    alert("Koszyk jest pusty!");
+    return;
+  }
+
+  fetch("/order", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({cart, code})
+  })
+  .then(res=>res.json())
+  .then(()=> {
+    alert("Zamówienie wysłane!");
+    cart = [];
+    renderCart();
+    document.getElementById("userCode").value = "";
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Błąd wysyłki zamówienia");
+  });
+}
+
+renderProducts();
+</script>
+
+</body>
+</html>
